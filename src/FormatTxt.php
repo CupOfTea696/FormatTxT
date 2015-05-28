@@ -114,7 +114,7 @@ class FormatTxt
               )
         ~';
         
-        $callback = function ($match) use ($options) {
+        $callback = function ($match) use ($options, $protocols) {
             $caption = $url = $match[0];
             $pattern = "~^((' . implode('|', $protocols) . '):(//)?)~";
             if (0 === preg_match($pattern, $url)) {
