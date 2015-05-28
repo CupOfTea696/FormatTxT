@@ -1,0 +1,21 @@
+{
+    "name": "cupoftea/format-txt",
+    "description": "PHP Text Formatter",
+    "require": {
+        "cupoftea/package": "~1.2",
+        "kuz/text": "~0.1"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "CupOfTea696",
+            "email": "cupoftea696@gmail.com"
+        }
+    ],
+    "autoload": {
+		"psr-4": {
+			"CupOfTea\\FormatTxt\\": "src/"
+		}
+	},
+    "minimum-stability": "stable"
+}
