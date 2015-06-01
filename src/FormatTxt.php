@@ -70,6 +70,7 @@ class FormatTxt
     {
         $options = array_merge_recursive([
             'strip_scheme' => true,
+            'max_length' => 40,
             'attributes' => [],
         ], $options);
         
@@ -91,6 +92,7 @@ class FormatTxt
                 $attributes .= " " . $attr . "='" . $value . "'";
             }
         }
+        $options['attributes'] = $attributes;
         
         $pattern = '~(?xi)
               (?:
@@ -121,6 +123,11 @@ class FormatTxt
                 $url = 'http://' . $url;
             } elseif($options['strip_scheme']) {
                 $caption = preg_replace($pattern, '', $url);
+                $caption = preg_replace('/^www\./', '', $caption);
+                
+                if (strlen($caption) > $options['max_length']) {
+                    $caption = substr($caption, 0, $options['max_length'] - 1) . '&hellip;';
+                }
             }
             if (isset($options['callback'])) {
                 $cb = $options['callback']($url, $caption, false);
@@ -129,7 +136,7 @@ class FormatTxt
                 }
             }
             
-            return '<a href="' . $url . '"' . $options['attr'] . '>' . $caption . '</a>';
+            return '<a href="' . $url . '"' . $options['attributes'] . '>' . $caption . '</a>';
         };
         
         $email_pattern = '~(?xi)
@@ -153,7 +160,7 @@ class FormatTxt
             $email = self::email($match[0]);
             $mailto = self::obfuscate('mailto:') . $email;
             
-            return '<a href="' . $mailto . '"' . $options['attr'] . '>' . $email . '</a>';
+            return '<a href="' . $mailto . '"' . $options['attributes'] . '>' . $email . '</a>';
         };
         
         $chunks = preg_split('/(<.+?>)/is', $text, 0, PREG_SPLIT_DELIM_CAPTURE);
@@ -230,6 +237,34 @@ class FormatTxt
     public static function email($email)
     {
         return str_replace('@', '&#64;', self::obfuscate($email));
+    }
+    
+    /**
+	 * Limit the number of characters in a string.
+	 *
+	 * @param  string  $value
+	 * @param  int     $limit
+	 * @param  string  $end
+	 * @return string
+	 */
+	public static function limit($value, $limit = 100, $end = '...')
+	{
+		if (mb_strlen($value) <= $limit) return $value;
+		return rtrim(mb_substr($value, 0, $limit, 'UTF-8')).$end;
+	}
+    
+    public static function number_format($float, $decimals = 9999, $fixed_decimals = false, $dec_point = '.', $thousands_sep = ',')
+    {
+        if (!is_numeric($float))
+            return $float;
+        
+        $float = number_format($float, 9999, $dec_point, $thousands_sep);
+        
+        if (!$fixed_decimals) {
+            $float = preg_replace('/(?:\.0+|(\.\d+?)0+)$/', '$1', $float);
+        }
+        
+        return $float;
     }
     
 }
