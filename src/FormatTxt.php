@@ -15,7 +15,7 @@ class FormatTxt
      * @const string
      */
     const PACKAGE = 'CupOfTea/FormatTxT';
-    const VERSION = '1.0.1';
+    const VERSION = '1.0.2';
     
     /**
      * Beautify a string into paragraphs and clickable links
