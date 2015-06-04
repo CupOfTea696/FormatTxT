@@ -15,7 +15,7 @@ class FormatTxt
      * @const string
      */
     const PACKAGE = 'CupOfTea/FormatTxT';
-    const VERSION = '1.0.2';
+    const VERSION = '1.0.3';
     
     /**
      * Beautify a string into paragraphs and clickable links
@@ -256,7 +256,7 @@ class FormatTxt
     public static function number_format($float, $decimals = 9999, $fixed_decimals = false, $dec_point = '.', $thousands_sep = ',')
     {
         if (!is_numeric($float))
-            return $float;
+            $float = intval($float);
         
         $float = number_format($float, 9999, $dec_point, $thousands_sep);
         
