@@ -27,7 +27,7 @@ class FormatTxt
     {
         $str = str_replace("\r\n", "\n", $str);
         $str = preg_replace('/\n\n+/', "\n\n", $str);
-        $str preg_replace('/^[\t\s\n]+/', '', $str);
+        $str = preg_replace('/^[\t\s\n]+/', '', $str);
         return preg_replace('/[\t\s\n]+$/', '', $str);
     }
     
