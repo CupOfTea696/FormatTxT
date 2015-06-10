@@ -18,14 +18,17 @@ class FormatTxt
     const VERSION = '1.2.0';
     
     /**
-     * Limits the number of consecutive line breaks to two.
+     * Limits the number of consecutive line breaks to two and trim any whitespace.
      *
      * @param  string $str
      * @return string
      */
     public static function normalize($str)
     {
-        return preg_replace('/\n\n+/', "\n\n", $str);
+        $str = str_replace("\r\n", "\n", $str);
+        $str = preg_replace('/\n\n+/', "\n\n", $str);
+        $str preg_replace('/^[\t\s\n]+/', '', $str);
+        return preg_replace('/[\t\s\n]+$/', '', $str);
     }
     
     
@@ -37,6 +40,7 @@ class FormatTxt
      */
     public static function remove_p($str)
     {
+        $str = self::normalize($str);
         return preg_replace('/\n\n+/', "\n", $str);
     }
     
@@ -49,6 +53,7 @@ class FormatTxt
      */
     public static function remove_nl($str)
     {
+        $str = self::normalize($str);
         return preg_replace('/\n+/', ' ', $str);
     }
     
@@ -86,7 +91,7 @@ class FormatTxt
      */
     public static function nl2p($text, $xhtml = false)
     {
-        return Text::nl2p($text, $xhtml);
+        return Text::nl2p(self::normalize($text), $xhtml);
     }
     
     /**
@@ -297,7 +302,7 @@ class FormatTxt
                 $text = implode($paragraphs);
             }
         } else {
-            $text = str_replace("\r\n", "\n", $text);
+            $text = self::normalize($text);
             $text = preg_replace('/((?:.*?\n\n+){0,' . $limit . '}).*/s', '$1', $text);
             
             if ($ln_limit) {
@@ -327,7 +332,7 @@ class FormatTxt
             $text = preg_replace('/((?:.*?<br>){0,' . $limit . '}).*/s', '$1', $text);
             $text = preg_replace('/(<br>)+$/', '', $text);
         } elseif(preg_match('/\n/', $text) && !preg_match('/^\n\n+$/', $text)) {
-            $text = str_replace("\r\n", "\n", $text);
+            $text = self::normalize($text);
             $text = preg_replace('/((?:.*?\n){0,' . $limit . '}).*/s', '$1', $text);
             $text = preg_replace('/\n+$/', '', $text);
         }
@@ -343,13 +348,15 @@ class FormatTxt
 	 * @param  string  $end
 	 * @return string
 	 */
-	public static function str_limit($str, $limit = 100, $end = '&hellip;', $collapse_nl = true)
+	public static function str_limit($text, $limit = 100, $end = '&hellip;', $collapse_nl = true)
 	{
+        $text = self::normalize($text);
+        
         if ($collapse_nl) {
-            $str = self::remove_p($str);
+            $text = self::remove_p($text);
         }
         
-        $strings = preg_split('/(<\\/?[^>]*>)/i', $str, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
+        $strings = preg_split('/(<\\/?[^>]*>)/i', $text, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
         
         $no_html = [];
         foreach($strings as &$string){
@@ -363,7 +370,7 @@ class FormatTxt
         $strlen = mb_strlen(implode($no_html));
         
         if ($strlen <= $limit) {
-            return $str;
+            return $text;
         }
         
         $remove = $strlen - ($limit + mb_strlen(preg_replace('/&[^;]+;/', 'x', $end)));
