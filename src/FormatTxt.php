@@ -18,6 +18,41 @@ class FormatTxt
     const VERSION = '1.1.0';
     
     /**
+     * Limits the number of consecutive line breaks to two.
+     *
+     * @param  string $str
+     * @return string
+     */
+    public static function normalize($str)
+    {
+        return preg_replace('/\n\n+/', "\n\n", $str);
+    }
+    
+    
+    /**
+     * Limits the number of consecutive line breaks to one.
+     *
+     * @param  string $str
+     * @return string
+     */
+    public static function remove_p($str)
+    {
+        return preg_replace('/\n\n+/', "\n", $str);
+    }
+    
+    
+    /**
+     * Replaces all line breaks with a single whitespace.
+     *
+     * @param  string $str
+     * @return string
+     */
+    public static function remove_nl($str)
+    {
+        return preg_replace('/\n+/', ' ', $str);
+    }
+    
+    /**
      * Beautify a string into paragraphs and clickable links
      * @param string $text
      * @return string
@@ -52,24 +87,6 @@ class FormatTxt
     public static function nl2p($text, $xhtml = false)
     {
         return Text::nl2p($text, $xhtml);
-    }
-    
-    /**
-     * Limit the amount of paragraphs
-     *
-     * @param   string  $text
-     * @param   string  $xhtml
-     * @return  string
-     * @see https://github.com/akuzemchak/text
-     */
-    public static function p_limit($text, $limit)
-    {
-        if (strpos($text, '<p>') !== false) {
-            return preg_replace('/((?:<p>.*?<\\/p>){0,' . $limit . '}).*/s', '$1', $text);
-        } else {
-            $text = str_replace("\r\n", "\n", $text);
-            return preg_replace('/((?:.*?\n\n+){0,' . $limit . '}).*/s', '$1', $text);
-        }
     }
     
     /**
@@ -258,17 +275,124 @@ class FormatTxt
     }
     
     /**
-	 * Limit the number of characters in a string.
+     * Limit the amount of paragraphs in a string.
+     *
+     * @param   string  $text
+     * @param   int  $limit
+     * @param   int  $line_limit
+     * @return  string
+     */
+    public static function p_limit($text, $limit, $ln_limit = false)
+    {
+        if (strpos($text, '<p>') !== false) {
+            $text = preg_replace('/((?:<p>.*?<\\/p>){0,' . $limit . '}).*/s', '$1', $text);
+            
+            if ($ln_limit) {
+                $paragraphs = preg_split('/(<\/?p>)/i', $text, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
+                
+                foreach ($paragraphs as &$paragraph) {
+                    $paragraph = self::ln_limit($paragraph, $ln_limit);
+                }
+                
+                $text = implode($paragraphs);
+            }
+        } else {
+            $text = str_replace("\r\n", "\n", $text);
+            $text = preg_replace('/((?:.*?\n\n+){0,' . $limit . '}).*/s', '$1', $text);
+            
+            if ($ln_limit) {
+                $paragraphs = preg_split('/(\n\n+)/i', $text, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
+                
+                foreach ($paragraphs as &$paragraph) {
+                    $paragraph = self::ln_limit($paragraph, $ln_limit);
+                }
+                
+                $text = implode($paragraphs);
+            }
+        }
+        
+        return $text;
+    }
+    
+    /**
+     * Limit the amount of lines in a string.
+     *
+     * @param   string  $text
+     * @param   int  $limit
+     * @return  string
+     */
+    public static function ln_limit($text, $limit)
+    {
+        if (strpos($text, '<br>') !== false) {
+            $text = preg_replace('/((?:.*?<br>){0,' . $limit . '}).*/s', '$1', $text);
+            $text = preg_replace('/(<br>)+$/', '', $text);
+        } elseif(preg_match('/\n/', $text) && !preg_match('/^\n\n+$/', $text)) {
+            $text = str_replace("\r\n", "\n", $text);
+            $text = preg_replace('/((?:.*?\n){0,' . $limit . '}).*/s', '$1', $text);
+            $text = preg_replace('/\n+$/', '', $text);
+        }
+        
+        return $text;
+    }
+    
+    /**
+	 * Limit the number of characters in a string ignoring html.
 	 *
 	 * @param  string  $value
 	 * @param  int     $limit
 	 * @param  string  $end
 	 * @return string
 	 */
-	public static function str_limit($value, $limit = 100, $end = '...')
+	public static function str_limit($str, $limit = 100, $end = '&hellip;', $collapse_nl = true)
 	{
-		if (mb_strlen($value) <= $limit) return $value;
-		return rtrim(mb_substr($value, 0, $limit, 'UTF-8')).$end;
+        if ($collapse_nl) {
+            $str = self::remove_p($str);
+        }
+        
+        $strings = preg_split('/(<\\/?[^>]*>)/i', $str, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
+        
+        $no_html = [];
+        foreach($strings as &$string){
+            if (!preg_match('/^<.*?>$/', $string)) {
+                $no_html[] = $string;
+                $string = ['str' => $string, 'html' => false];
+            } else {
+                $string = ['str' => $string, 'html' => true];
+            }
+        }
+        $strlen = mb_strlen(implode($no_html));
+        
+        if ($strlen <= $limit) {
+            return $str;
+        }
+        
+        $remove = $strlen - ($limit + mb_strlen(preg_replace('/&[^;]+;/', 'x', $end)));
+        $removed = 0;
+        $strings = array_reverse($strings);
+        $output = [];
+        
+        foreach ($strings as $string) {
+            if ($string['html'] || $removed == $remove) {
+                $output[] = $string['str'];
+                continue;
+            }
+            
+            if (($strlen = mb_strlen($string['str'])) < $remove - $removed) {
+                $removed += $strlen;
+            } else {
+                $output[] = mb_substr($string['str'], 0, -($remove - $removed), 'UTF-8');
+                $removed = $remove;
+            }
+        }
+        
+        foreach ($output as &$string) {
+            if (!preg_match('/^<.*?>$/', $string)) {
+                $string .= $end;
+                break;
+            }
+        }
+        
+        return implode(array_reverse($output));
 	}
     
     public static function number_format($float, $decimals = 9999, $fixed_decimals = false, $dec_point = '.', $thousands_sep = ',')
