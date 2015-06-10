@@ -55,6 +55,24 @@ class FormatTxt
     }
     
     /**
+     * Limit the amount of paragraphs
+     *
+     * @param   string  $text
+     * @param   string  $xhtml
+     * @return  string
+     * @see https://github.com/akuzemchak/text
+     */
+    public static function p_limit($text, $limit)
+    {
+        if (strpos($text, '<p>') !== false) {
+            return preg_replace('/((?:<p>.*?<\\/p>){0,' . $limit . '}).*/s', '$1', $text);
+        } else {
+            $text = str_replace("\r\n", "\n", $text);
+            return preg_replace('/((?:.*?\n\n+){0,' . $limit . '}).*/s', '$1', $text);
+        }
+    }
+    
+    /**
      * Linkify Text
      *
      * @param  [[Type]] $text                  [[Description]]
@@ -247,7 +265,7 @@ class FormatTxt
 	 * @param  string  $end
 	 * @return string
 	 */
-	public static function limit($value, $limit = 100, $end = '...')
+	public static function str_limit($value, $limit = 100, $end = '...')
 	{
 		if (mb_strlen($value) <= $limit) return $value;
 		return rtrim(mb_substr($value, 0, $limit, 'UTF-8')).$end;
