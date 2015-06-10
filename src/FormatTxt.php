@@ -15,7 +15,7 @@ class FormatTxt
      * @const string
      */
     const PACKAGE = 'CupOfTea/FormatTxT';
-    const VERSION = '1.1.0';
+    const VERSION = '1.2.0';
     
     /**
      * Limits the number of consecutive line breaks to two.
