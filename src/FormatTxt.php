@@ -2,7 +2,6 @@
 
 use Kuz\Text;
 use CupOfTea\Package\Package;
-
 use CupOfTea\FromatTxt\Exceptions\InvalidAttributeException;
 
 class FormatTxt
@@ -10,7 +9,7 @@ class FormatTxt
     use Package;
     
     /**
-     * Package Info
+     * Package Info.
      *
      * @const string
      */
@@ -28,9 +27,9 @@ class FormatTxt
         $str = str_replace("\r\n", "\n", $str);
         $str = preg_replace('/\n\n+/', "\n\n", $str);
         $str = preg_replace('/^[\t\s\n]+/', '', $str);
+
         return preg_replace('/[\t\s\n]+$/', '', $str);
     }
-    
     
     /**
      * Limits the number of consecutive line breaks to one.
@@ -41,9 +40,9 @@ class FormatTxt
     public static function remove_p($str)
     {
         $str = self::normalize($str);
+
         return preg_replace('/\n\n+/', "\n", $str);
     }
-    
     
     /**
      * Replaces all line breaks with a single whitespace.
@@ -54,11 +53,12 @@ class FormatTxt
     public static function remove_nl($str)
     {
         $str = self::normalize($str);
+
         return preg_replace('/\n+/', ' ', $str);
     }
     
     /**
-     * Beautify a string into paragraphs and clickable links
+     * Beautify a string into paragraphs and clickable links.
      * @param string $text
      * @return string
      */
@@ -68,7 +68,7 @@ class FormatTxt
     }
     
     /**
-     * Format a string by replacing placeholder values
+     * Format a string by replacing placeholder values.
      *
      * @param   string  $subject
      * @param   array   $replacements
@@ -82,7 +82,7 @@ class FormatTxt
     }
     
     /**
-     * Convert line breaks into <p> and <br> tags
+     * Convert line breaks into <p> and <br> tags.
      *
      * @param   string  $text
      * @param   string  $xhtml
@@ -95,7 +95,7 @@ class FormatTxt
     }
     
     /**
-     * Linkify Text
+     * Linkify Text.
      *
      * @param  [[Type]] $text                  [[Description]]
      * @param  [[Type]] [$protocols = ['http'] [[Description]]
@@ -129,7 +129,7 @@ class FormatTxt
             } elseif (strpos($value, '"') !== false) {
                 $attributes .= ' ' . $attr . '="' . $value . '"';
             } else {
-                $attributes .= " " . $attr . "='" . $value . "'";
+                $attributes .= ' ' . $attr . "='" . $value . "'";
             }
         }
         $options['attributes'] = $attributes;
@@ -158,10 +158,10 @@ class FormatTxt
         
         $callback = function ($match) use ($options, $protocols) {
             $caption = $url = $match[0];
-            $pattern = "~^((" . implode('|', $protocols) . "):(//)?)~";
+            $pattern = '~^((' . implode('|', $protocols) . '):(//)?)~';
             if (0 === preg_match($pattern, $url)) {
                 $url = 'http://' . $url;
-            } elseif($options['strip_scheme']) {
+            } elseif ($options['strip_scheme']) {
                 $caption = preg_replace($pattern, '', $url);
                 $caption = preg_replace('/^www\./', '', $caption);
                 
@@ -171,7 +171,7 @@ class FormatTxt
             }
             if (isset($options['callback'])) {
                 $cb = $options['callback']($url, $caption, false);
-                if (!is_null($cb)) {
+                if (! is_null($cb)) {
                     return $cb;
                 }
             }
@@ -192,7 +192,7 @@ class FormatTxt
         $email_callback = function ($match) use ($options) {
             if (isset($options['callback'])) {
                 $cb = $options['callback']($match[0], $match[0], true);
-                if (!is_null($cb)) {
+                if (! is_null($cb)) {
                     return $cb;
                 }
             }
@@ -220,7 +220,7 @@ class FormatTxt
                 // Only process this tag if there are no unclosed $ignoreTags
                 if ($openTag === null) {
                     // Check whether this tag is contained in $ignoreTags and is not self-closing
-                    if (preg_match("`<(" . implode('|', $ignoreTags) . ").*(?<!/)>$`is", $chunks[$i], $matches)) {
+                    if (preg_match('`<(' . implode('|', $ignoreTags) . ').*(?<!/)>$`is', $chunks[$i], $matches)) {
                         $openTag = $matches[1];
                     }
                 } else {
@@ -236,44 +236,46 @@ class FormatTxt
     }
     
     /**
-	 * Obfuscate a string to prevent spam-bots from sniffing it.
-	 *
-	 * @param  string  $value
-	 * @return string
-	 * @see https://github.com/illuminate/html/blob/master/HtmlBuilder.php
-	 */
+     * Obfuscate a string to prevent spam-bots from sniffing it.
+     *
+     * @param  string  $value
+     * @return string
+     * @see https://github.com/illuminate/html/blob/master/HtmlBuilder.php
+     */
     public static function obfuscate($value)
-	{
-		$safe = '';
+    {
+        $safe = '';
         
-		foreach (str_split($value) as $letter) {
-			if (ord($letter) > 128) return $letter;
-			// To properly obfuscate the value, we will randomly convert each letter to
-			// its entity or hexadecimal representation, keeping a bot from sniffing
-			// the randomly obfuscated letters out of the string on the responses.
-			switch (rand(1, 3)) {
-				case 1:
-					$safe .= '&#'.ord($letter).';';
+        foreach (str_split($value) as $letter) {
+            if (ord($letter) > 128) {
+                return $letter;
+            }
+            // To properly obfuscate the value, we will randomly convert each letter to
+            // its entity or hexadecimal representation, keeping a bot from sniffing
+            // the randomly obfuscated letters out of the string on the responses.
+            switch (rand(1, 3)) {
+                case 1:
+                    $safe .= '&#' . ord($letter) . ';';
                     break;
-				case 2:
-					$safe .= '&#x'.dechex(ord($letter)).';';
+                case 2:
+                    $safe .= '&#x' . dechex(ord($letter)) . ';';
                     break;
-				case 3:
-					$safe .= $letter;
+                case 3:
+                    $safe .= $letter;
                     break;
-			}
-		}
+            }
+        }
         
-		return $safe;
-	}
+        return $safe;
+    }
     
     /**
-	 * Obfuscate an e-mail address to prevent spam-bots from sniffing it.
-	 *
-	 * @param  string  $email
-	 * @return string
-	 * @see https://github.com/illuminate/html/blob/master/HtmlBuilder.php
-	 */
+     * Obfuscate an e-mail address to prevent spam-bots from sniffing it.
+     *
+     * @param  string  $email
+     * @return string
+     * @see https://github.com/illuminate/html/blob/master/HtmlBuilder.php
+     */
     public static function email($email)
     {
         return str_replace('@', '&#64;', self::obfuscate($email));
@@ -331,7 +333,7 @@ class FormatTxt
         if (strpos($text, '<br>') !== false) {
             $text = preg_replace('/((?:.*?<br>){0,' . $limit . '}).*/s', '$1', $text);
             $text = preg_replace('/(<br>)+$/', '', $text);
-        } elseif(preg_match('/\n/', $text) && !preg_match('/^\n\n+$/', $text)) {
+        } elseif (preg_match('/\n/', $text) && ! preg_match('/^\n\n+$/', $text)) {
             $text = self::normalize($text);
             $text = preg_replace('/((?:.*?\n){0,' . $limit . '}).*/s', '$1', $text);
             $text = preg_replace('/\n+$/', '', $text);
@@ -341,15 +343,15 @@ class FormatTxt
     }
     
     /**
-	 * Limit the number of characters in a string ignoring html.
-	 *
-	 * @param  string  $value
-	 * @param  int     $limit
-	 * @param  string  $end
-	 * @return string
-	 */
-	public static function str_limit($text, $limit = 100, $end = '&hellip;', $collapse_nl = true)
-	{
+     * Limit the number of characters in a string ignoring html.
+     *
+     * @param  string  $value
+     * @param  int     $limit
+     * @param  string  $end
+     * @return string
+     */
+    public static function str_limit($text, $limit = 100, $end = '&hellip;', $collapse_nl = true)
+    {
         $text = self::normalize($text);
         
         if ($collapse_nl) {
@@ -359,8 +361,8 @@ class FormatTxt
         $strings = preg_split('/(<\\/?[^>]*>)/i', $text, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
         
         $no_html = [];
-        foreach($strings as &$string){
-            if (!preg_match('/^<.*?>$/', $string)) {
+        foreach ($strings as &$string) {
+            if (! preg_match('/^<.*?>$/', $string)) {
                 $no_html[] = $string;
                 $string = ['str' => $string, 'html' => false];
             } else {
@@ -393,27 +395,27 @@ class FormatTxt
         }
         
         foreach ($output as &$string) {
-            if (!preg_match('/^<.*?>$/', $string)) {
+            if (! preg_match('/^<.*?>$/', $string)) {
                 $string .= $end;
                 break;
             }
         }
         
         return implode(array_reverse($output));
-	}
+    }
     
     public static function number_format($float, $decimals = 9999, $fixed_decimals = false, $dec_point = '.', $thousands_sep = ',')
     {
-        if (!is_numeric($float))
+        if (! is_numeric($float)) {
             $float = intval($float);
+        }
         
         $float = number_format($float, 9999, $dec_point, $thousands_sep);
         
-        if (!$fixed_decimals) {
+        if (! $fixed_decimals) {
             $float = preg_replace('/(?:\.0+|(\.\d+?)0+)$/', '$1', $float);
         }
         
         return $float;
     }
-    
 }

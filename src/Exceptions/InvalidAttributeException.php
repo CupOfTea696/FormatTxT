@@ -2,4 +2,6 @@
 
 use Exception;
 
-class InvalidAttributeException extends Exception{}
+class InvalidAttributeException extends Exception
+{
+}
